@@ -1,0 +1,103 @@
+/*
+
+Tim TEST ENS160+AHT21
+
+a 20231201 start testing.
+
+*/
+
+/***************************************************************************
+
+ENS160 - Digital Air Quality Sensor
+
+
+This is an example for ENS160 basic reading in standard mode
+
+
+Updated by Sciosense / 25-Nov-2021
+
+***************************************************************************/
+
+#include <Wire.h>
+#include "ScioSense_ENS160.h" // ENS160 library
+#include <Adafruit_AHTX0.h>
+// #include <LiquidCrystal_I2C.h>
+
+// LiquidCrystal_I2C lcd(0x27,16,2);
+
+Adafruit_AHTX0 aht;
+ScioSense_ENS160 ens160(ENS160_I2CADDR_1); // 0x53..ENS160+AHT21
+
+int tempC; // To store the temperature in C
+int humidity; // To store the humidity
+
+void setup()
+{
+  Serial.begin(9600);
+  // lcd.init();
+  // lcd.backlight();
+  // lcd.setCursor(3,0);
+  // lcd.print("ENS160+AHT21");
+  ens160.begin();
+  Serial.println(ens160.available() ? "done." : "failed!");
+  if (ens160.available())
+  {
+    Serial.print("\tRev: ");
+    Serial.print(ens160.getMajorRev());
+
+    Serial.print(".");
+    Serial.print(ens160.getMinorRev());
+
+    Serial.print(".");
+    Serial.println(ens160.getBuild());
+
+    Serial.print("\tStandard mode ");
+
+    Serial.println(ens160.setMode(ENS160_OPMODE_STD) ? "done." : "failed!");
+  }
+  if (!aht.begin())
+  {
+
+    Serial.println("Could not find AHT? Check wiring");
+
+    while (1)
+      delay(10);
+  }
+
+  Serial.println("AHT10 or AHT20 found");
+}
+
+void loop()
+{
+  sensors_event_t humidity1, temp;
+  aht.getEvent(&humidity1, &temp);
+  tempC = (temp.temperature);
+  humidity = (humidity1.relative_humidity);
+  Serial.print("Temperature: ");
+  // lcd.setCursor(3,0);
+  // lcd.print("Temp: ");
+  // lcd.print(tempC);
+  Serial.print(tempC);
+  Serial.println(" degrees °C");
+  delay(1000);
+
+  if (ens160.available())
+  {
+    ens160.set_envdata(tempC, humidity);
+    ens160.measure(true);
+    ens160.measureRaw(true);
+
+    Serial.print("AQI: ");
+    Serial.print(ens160.getAQI());
+    Serial.print("\t");
+
+    Serial.print("TVOC: ");
+    Serial.print(ens160.getTVOC());
+    Serial.print("ppb\t");
+
+    Serial.print("eCO2: ");
+    Serial.print(ens160.geteCO2());
+    Serial.println("ppm\t");
+  }
+  delay(1000);
+} 
